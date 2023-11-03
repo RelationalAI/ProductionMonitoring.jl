@@ -2,12 +2,12 @@ module ThreadingUtils
 
 import DataStructures
 import Dates
-import ProductionMonitoring.RAI_Metrics
+import ProductionMonitoring.Metrics
 using Base: Semaphore, acquire, release, wait
 using Base.Threads: Atomic, @spawn, Condition
 using Dates: Period
 using ProductionMonitoring.DebugLevels: @warn_with_verbosity
-using ProductionMonitoring.RAI_Metrics: AbstractMetricCollection, Gauge, Counter, inc!, dec!
+using ProductionMonitoring.Metrics: AbstractMetricCollection, Gauge, Counter, inc!, dec!
 using ScopedValues
 using ProductionMonitoring.TransactionLogging
 using ProductionMonitoring.TransactionLogging: @error_with_current_exceptions, @warn_with_current_exceptions
@@ -37,7 +37,7 @@ function __init__()
         metric_manager[] = MicrometricManager()
     end
 
-    RAI_Metrics.publish_metrics_from(THREADING_UTILS_METRICS)
+    Metrics.publish_metrics_from(THREADING_UTILS_METRICS)
 end
 
 """

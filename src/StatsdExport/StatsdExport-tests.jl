@@ -1,8 +1,8 @@
 @testitem "StatsdExport" begin
 
 using ProductionMonitoring.StatsdExport
-using ProductionMonitoring.RAI_Metrics
-using ProductionMonitoring.RAI_Metrics: register!, clear_registry!
+using ProductionMonitoring.Metrics
+using ProductionMonitoring.Metrics: register!, clear_registry!
 using Sockets
 using Dates
 

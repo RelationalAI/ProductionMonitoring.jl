@@ -2,8 +2,8 @@ module StatsdExport
 
 import Dates
 using Dates: now, Period, Millisecond, Second
-using ProductionMonitoring.RAI_Metrics
-using ProductionMonitoring.RAI_Metrics: NumericMetric
+using ProductionMonitoring.Metrics
+using ProductionMonitoring.Metrics: NumericMetric
 using Sockets
 using ProductionMonitoring.ThreadingUtils: PeriodicTask, @spawn_sticky_periodic_task, stop_periodic_task!
 
@@ -136,11 +136,11 @@ function value_change!(m::Counter, cell::NumericMetric)
 end
 
 function make_statsd_message(m::Counter, cell::NumericMetric)
-    return "$(RAI_Metrics.name(m)):$(value_change!(m, cell))|c$(make_label_string(cell))"
+    return "$(Metrics.name(m)):$(value_change!(m, cell))|c$(make_label_string(cell))"
 end
 
 function make_statsd_message(m::Gauge, cell::NumericMetric)
-    return "$(RAI_Metrics.name(m)):$(cell.value[])|g$(make_label_string(cell))"
+    return "$(Metrics.name(m)):$(cell.value[])|g$(make_label_string(cell))"
 end
 
 """
@@ -163,10 +163,10 @@ function send_metric_updates(data::StatsdExporter)
         < c.last_changed[]
         < data.last_emission_timestamp
     )
-    emission_duration = RAI_Metrics.@time_ms begin
+    emission_duration = Metrics.@time_ms begin
         for reg in data.metric_registries
             for metric in values(reg.metrics)
-                for cell in filter(should_emit_cell, RAI_Metrics.get_cells(metric))
+                for cell in filter(should_emit_cell, Metrics.get_cells(metric))
                     push!(messages, make_statsd_message(metric, cell))
                 end
             end

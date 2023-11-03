@@ -2,14 +2,14 @@
 ## representing the DataDogBackend
 
 import HTTP
-import ProductionMonitoring.RAI_Metrics
+import ProductionMonitoring.Metrics
 import UUIDs
 
 using Random
 using Logging
 using DataStructures: MultiDict
 using ProductionMonitoring.Tracing: SPANS_BUFFER, SerializedSpan
-using ProductionMonitoring.RAI_Metrics: AbstractMetricCollection, Counter, Gauge, publish_metrics_from, inc!
+using ProductionMonitoring.Metrics: AbstractMetricCollection, Counter, Gauge, publish_metrics_from, inc!
 using ProductionMonitoring.TransactionLogging:
     @warn_with_current_exceptions, has_transaction_id, get_transaction_id
 
@@ -124,7 +124,7 @@ end
 # We can configure this using DD_AGENT_HOST:DD_AGENT_PORT.
 # Alternatively, DD_TRACE_AGENT_URL and DD_DOGSTATSD_URL can be set to use variety
 # of backends.
-# DD_DOGSTATSD_HOST, DD_DOGSTATD_PORT, DD_DOGSTATD_URL need to be used in RAI_Metrics.
+# DD_DOGSTATSD_HOST, DD_DOGSTATD_PORT, DD_DOGSTATD_URL need to be used in Metrics.
 
 """
 Holds reference to datadog trace backend url string. This will be set once at startup.
@@ -205,7 +205,7 @@ end
 function datadog_buffer_spans_and_send!()
     batcher = SpanBatcher()
     while isready(SPANS_BUFFER)
-        RAI_Metrics.set!(
+        Metrics.set!(
             METRICS.tracing_datadog_reporter_queue_size,
             Float64(length(SPANS_BUFFER.data)),
         )

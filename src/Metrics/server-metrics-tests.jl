@@ -1,14 +1,14 @@
 @testitem "server metrics" begin
 
 import Logging
-using ProductionMonitoring.RAI_Metrics
+using ProductionMonitoring.Metrics
 
 using Sockets
 using Dates
-using ProductionMonitoring.RAI_Metrics: AbstractMetric, NumericMetric, MetricGroup
-using ProductionMonitoring.RAI_Metrics: register!, unregister!, clear_registry!
-using ProductionMonitoring.RAI_Metrics: get_metric, set_counter!
-using ProductionMonitoring.RAI_Metrics: get_cells
+using ProductionMonitoring.Metrics: AbstractMetric, NumericMetric, MetricGroup
+using ProductionMonitoring.Metrics: register!, unregister!, clear_registry!
+using ProductionMonitoring.Metrics: get_metric, set_counter!
+using ProductionMonitoring.Metrics: get_cells
 using DataStructures: SortedDict
 using ProductionMonitoring.DebugLevels
 
@@ -16,21 +16,21 @@ get_cell_values(m) = Dict(cell.labels => cell.value[] for cell in get_cells(m))
 metric_values(m::NumericMetric) = m.value[]
 metric_values(m::MetricGroup) = Dict(k => v.value[] for (k, v) in m.cells)
 metric_values(m::AbstractMetric) = metric_values(m.content)
-is_dummy(x) = isa(x, RAI_Metrics.DummyCell)
+is_dummy(x) = isa(x, Metrics.DummyCell)
 
 @testset "get_cell! with invalid labels" begin
     cnt::Counter = Counter(;labels=[:action, :code])
-    @test is_dummy(RAI_Metrics.get_cell!(cnt; action="get"))
-    @test is_dummy(RAI_Metrics.get_cell!(cnt; action="get", code=200, unknown="foo"))
+    @test is_dummy(Metrics.get_cell!(cnt; action="get"))
+    @test is_dummy(Metrics.get_cell!(cnt; action="get", code=200, unknown="foo"))
 end
 
 @testset "get_cell_if_exists does not create new cells" begin
     cnt::Counter = Counter(;labels=[:day])
-    @test RAI_Metrics.get_cell_if_exists(cnt; day="Monday") == nothing
+    @test Metrics.get_cell_if_exists(cnt; day="Monday") == nothing
     @test metric_values(cnt) == Dict()
 
-    @test RAI_Metrics.get_cell!(cnt; day="Monday") isa NumericMetric
-    @test RAI_Metrics.get_cell_if_exists(cnt; day="Monday") isa NumericMetric
+    @test Metrics.get_cell!(cnt; day="Monday") isa NumericMetric
+    @test Metrics.get_cell_if_exists(cnt; day="Monday") isa NumericMetric
     @test metric_values(cnt) == Dict(Dict(:day => "Monday") => 0.0)
 end
 
@@ -47,23 +47,23 @@ end
 
 @testset "get_cell! for singular counter" begin
     cnt::Counter = Counter()
-    @test is_dummy(RAI_Metrics.get_cell!(cnt; label=10))
-    @test RAI_Metrics.get_cell_if_exists(cnt; label=10) == nothing
-    @test RAI_Metrics.get_cell_if_exists(cnt) == cnt.content
-    @test RAI_Metrics.get_cell!(cnt) == cnt.content
+    @test is_dummy(Metrics.get_cell!(cnt; label=10))
+    @test Metrics.get_cell_if_exists(cnt; label=10) == nothing
+    @test Metrics.get_cell_if_exists(cnt) == cnt.content
+    @test Metrics.get_cell!(cnt) == cnt.content
 end
 
 @testset "get_cell with Counter" begin
     cnt::Counter = Counter(;labels=[:action, :code])
     @test metric_values(cnt) == Dict()
 
-    @test RAI_Metrics.get_cell!(cnt; action="get", code=200) isa NumericMetric
+    @test Metrics.get_cell!(cnt; action="get", code=200) isa NumericMetric
     @test metric_values(cnt) == Dict(
         Dict(:action => "get", :code => "200") => 0.0,
     )
 
-    RAI_Metrics.get_cell!(cnt; action="get", code=500)
-    RAI_Metrics.get_cell!(cnt; action="put", code=200)
+    Metrics.get_cell!(cnt; action="get", code=500)
+    Metrics.get_cell!(cnt; action="put", code=200)
     @test metric_values(cnt) == Dict(
         Dict(:action => "get", :code => "200") => 0.0,
         Dict(:action => "get", :code => "500") => 0.0,
@@ -103,7 +103,7 @@ end
 end
 
 @testset "Simple counter manipulations" begin
-    c = RAI_Metrics.Counter()
+    c = Metrics.Counter()
     @test metric_values(c) == 0.0
     inc!(c)
     @test metric_values(c) == 1.0
@@ -117,7 +117,7 @@ end
 
 
 @testset "Manual set counter" begin
-    c = RAI_Metrics.Counter()
+    c = Metrics.Counter()
     @test metric_values(c) == 0.0
     inc!(c)
     @test metric_values(c) == 1.0
@@ -128,15 +128,15 @@ end
 end
 
 @testset "Gauge constructors" begin
-    g1 = RAI_Metrics.Gauge()
+    g1 = Metrics.Gauge()
     @test metric_values(g1) == 0.0
 
-    g2 = RAI_Metrics.Gauge(10.0)
+    g2 = Metrics.Gauge(10.0)
     @test metric_values(g2) == 10.0
 end
 
 @testset "Simple gauge manipulations" begin
-    g = RAI_Metrics.Gauge()
+    g = Metrics.Gauge()
     @test metric_values(g) == 0.0
     inc!(g)
     @test metric_values(g) == 1.0
@@ -153,33 +153,33 @@ end
 end
 
 @testset "Registry enforces unique names" begin
-    r = RAI_Metrics.MetricRegistry()
-    c1 = RAI_Metrics.Counter()
+    r = Metrics.MetricRegistry()
+    c1 = Metrics.Counter()
     register!(r, c1, "first_name")
-    c2 = RAI_Metrics.Counter()
+    c2 = Metrics.Counter()
     register!(r, c2, "second_name")
-    @test RAI_Metrics.name(c1) == "first_name"
-    @test RAI_Metrics.name(c2) == "second_name"
-    c3 = RAI_Metrics.Counter()
+    @test Metrics.name(c1) == "first_name"
+    @test Metrics.name(c2) == "second_name"
+    c3 = Metrics.Counter()
     @test_throws KeyError register!(r, c3, "first_name")
-    @test RAI_Metrics.name(c3) == nothing
+    @test Metrics.name(c3) == nothing
 end
 
 @testset "Once registered, name remains fixed" begin
-    r = RAI_Metrics.MetricRegistry()
-    c = RAI_Metrics.Counter()
-    @test RAI_Metrics.name(c) === nothing
+    r = Metrics.MetricRegistry()
+    c = Metrics.Counter()
+    @test Metrics.name(c) === nothing
     register!(r, c, "my_name")
-    @test RAI_Metrics.name(c) == "my_name"
+    @test Metrics.name(c) == "my_name"
     unregister!(r, "my_name")
-    @test RAI_Metrics.name(c) == "my_name"
+    @test Metrics.name(c) == "my_name"
 end
 
 @testset "overwriting existing metrics" begin
-    r = RAI_Metrics.MetricRegistry()
-    c1 = RAI_Metrics.Counter()
-    c2 = RAI_Metrics.Counter()
-    c3 = RAI_Metrics.Counter()
+    r = Metrics.MetricRegistry()
+    c1 = Metrics.Counter()
+    c2 = Metrics.Counter()
+    c3 = Metrics.Counter()
     register!(r, c1, "first_name")
     @test_throws KeyError register!(r, c2, "first_name")
     @test get_metric(r, "first_name") == c1
@@ -195,16 +195,16 @@ end
 end
 
 # Returns sorted Array of metric names registered within given registry.
-list_metrics(r::RAI_Metrics.MetricRegistry) = sort(collect(keys(r.metrics)))
+list_metrics(r::Metrics.MetricRegistry) = sort(collect(keys(r.metrics)))
 
 
 # Uniqueness of metric name is enforced within a single registry. Two registries
 # can have metric with the same name.
 @testset "Metrics unique within registry" begin
-    r1 = RAI_Metrics.MetricRegistry()
-    r2 = RAI_Metrics.MetricRegistry()
-    g1 = RAI_Metrics.Gauge(1.0)
-    g2 = RAI_Metrics.Gauge(3.0)
+    r1 = Metrics.MetricRegistry()
+    r2 = Metrics.MetricRegistry()
+    g1 = Metrics.Gauge(1.0)
+    g2 = Metrics.Gauge(3.0)
     register!(r1, g1, "unique")
     register!(r2, g2, "unique")
     @test list_metrics(r1) == ["unique"]
@@ -215,9 +215,9 @@ end
 
 # Single metric can only be registered once.
 @testset "Name constraints on metrics are enforced" begin
-    r1 = RAI_Metrics.MetricRegistry()
-    r2 = RAI_Metrics.MetricRegistry()
-    c = RAI_Metrics.Counter()
+    r1 = Metrics.MetricRegistry()
+    r2 = Metrics.MetricRegistry()
+    c = Metrics.Counter()
     register!(r1, c, "my_counter")
 
     # Registering under the same name twice is okay
@@ -228,9 +228,9 @@ end
 end
 
 @testset "Multiple registration with same name okay" begin
-    r1 = RAI_Metrics.MetricRegistry()
-    r2 = RAI_Metrics.MetricRegistry()
-    c = RAI_Metrics.Counter()
+    r1 = Metrics.MetricRegistry()
+    r2 = Metrics.MetricRegistry()
+    c = Metrics.Counter()
     register!(r1, c, "my_counter")
     @test_logs register!(r2, c, "my_counter")
 end
@@ -238,9 +238,9 @@ end
 
 # Metric could be registered sequentially in two registries if it's unregistered from one.
 @testset "Sequential multiple registration" begin
-    r1 = RAI_Metrics.MetricRegistry()
-    r2 = RAI_Metrics.MetricRegistry()
-    c = RAI_Metrics.Counter()
+    r1 = Metrics.MetricRegistry()
+    r2 = Metrics.MetricRegistry()
+    c = Metrics.Counter()
     register!(r1, c, "my_counter")
     unregister!(r1, "my_counter")
     register!(r2, c, "my_counter")
@@ -251,14 +251,14 @@ end
 @testset "Metric name length enforced" begin
     @test_throws ArgumentError register!(
         MetricRegistry(),
-        RAI_Metrics.Counter(),
+        Metrics.Counter(),
         "c"^201
     )
 end
 
 @testset "Metric name validation" begin
     r = MetricRegistry()
-    c = RAI_Metrics.Counter()
+    c = Metrics.Counter()
     @test_throws ArgumentError register!(r, c, "hyphens-not-permitted")
     @test_throws ArgumentError register!(r, c, ".tralala")
     @test_throws ArgumentError register!(r, c, "2tralala")
@@ -392,53 +392,53 @@ end
 
 @testset "Zero all metrics" begin
     r = MetricRegistry()
-    c = register!(r, RAI_Metrics.Counter(;labels=[:my_label]), "my_counter")
-    g = register!(r, RAI_Metrics.Gauge(), "my_gauge")
-    c_free = RAI_Metrics.Counter()
+    c = register!(r, Metrics.Counter(;labels=[:my_label]), "my_counter")
+    g = register!(r, Metrics.Gauge(), "my_gauge")
+    c_free = Metrics.Counter()
 
     inc!(c, 2.0; my_label="green")
     set!(g, 5.0)
     inc!(c_free)
 
-    @test RAI_Metrics.value_of(r, "my_counter"; my_label="green") == 2.0
+    @test Metrics.value_of(r, "my_counter"; my_label="green") == 2.0
     @test metric_values(g) == 5.0
     @test metric_values(c_free) == 1.0
 
-    RAI_Metrics.zero_all_metrics(r)
+    Metrics.zero_all_metrics(r)
 
-    @test RAI_Metrics.value_of(r, "my_counter"; my_label="green") == 0.0
+    @test Metrics.value_of(r, "my_counter"; my_label="green") == 0.0
     @test metric_values(g) == 0.0
     @test metric_values(c_free) == 1.0
 end
 
 @testset "value_of for simple metrics" begin
     r = MetricRegistry()
-    c = register!(r, RAI_Metrics.Counter(), "my_counter")
-    g = register!(r, RAI_Metrics.Gauge(), "my_gauge")
+    c = register!(r, Metrics.Counter(), "my_counter")
+    g = register!(r, Metrics.Gauge(), "my_gauge")
     inc!(c)
     set!(g, 50)
-    @test RAI_Metrics.value_of(r, "my_counter") == 1.0
-    @test RAI_Metrics.value_of(r, "my_gauge") == 50.0
-    @test RAI_Metrics.value_of(r, "unknown") == nothing
+    @test Metrics.value_of(r, "my_counter") == 1.0
+    @test Metrics.value_of(r, "my_gauge") == 50.0
+    @test Metrics.value_of(r, "unknown") == nothing
 end
 
 @testset "value_of for labelled metrics" begin
     r = MetricRegistry()
-    c = register!(r, RAI_Metrics.Counter(;labels=[:response_code, :action]), "my_counter")
+    c = register!(r, Metrics.Counter(;labels=[:response_code, :action]), "my_counter")
     inc!(c; action="GET", response_code=200)
     inc!(c; action="PUT")  # This inc! is invalid due to bad labels and should be silently ignored.
 
     # The following doesn't work because all labels are missing.
-    @test RAI_Metrics.value_of(r, "my_counter") == nothing
+    @test Metrics.value_of(r, "my_counter") == nothing
 
     # The following doesn't work because unknown "badlabel" is present.
-    @test RAI_Metrics.value_of(r, "my_counter"; action="GET", response_code=200, badlabel=1) == nothing
+    @test Metrics.value_of(r, "my_counter"; action="GET", response_code=200, badlabel=1) == nothing
 
     # The following doesn't work because "response_code" label is missing.
-    @test RAI_Metrics.value_of(r, "my_counter"; action="PUT") == nothing
+    @test Metrics.value_of(r, "my_counter"; action="PUT") == nothing
 
     # The following works and refers to the cell created above.
-    @test RAI_Metrics.value_of(r, "my_counter"; action="GET", response_code=200) == 1.0
+    @test Metrics.value_of(r, "my_counter"; action="GET", response_code=200) == 1.0
 end
 
 end # testitem

@@ -1,6 +1,6 @@
-# RAI_Metrics
+# Metrics
 
-The RAI_Metrics package contains:
+The Metrics package contains:
 
   1. Server metrics infrastructure for collecting process-wide statistics.
 
@@ -80,10 +80,10 @@ Keep in mind the following rules:
 ### Instrumenting your code
 
 To instrument your module with server metrics you will first need to create a subclass of
-`RAI_Metrics.AbstractMetricCollection` that will hold your metrics.
+`Metrics.AbstractMetricCollection` that will hold your metrics.
 
 ```julia
-using RAI_Metrics
+using Metrics
 
 Base.@kwdef struct MyModuleMetrics <: AbstractMetricCollection
     lunches_consumed::Counter = Counter() # specify the type to ensure type stability
@@ -98,7 +98,7 @@ want to create a global const instance of this structure and add it to the defau
 const metrics = MyModuleMetrics()
 
 function __init__()
-  RAI_Metrics.publish_metrics_from(metrics)
+  Metrics.publish_metrics_from(metrics)
 end
 ```
 
@@ -143,12 +143,12 @@ To ensure that your metrics are behaving the way you expect, you can inspect the
 Exmaple unit test setup:
 ```julia
 # reset all metrics so the results are reproducible (note that multithreading will impact metrics testing!)
-RAI_Metrics.zero_all_metrics()
+Metrics.zero_all_metrics()
 
 # do work here that should cause metrics to change (or not!)
 
 # check that your metrics have the expected value
-@test RAI_Metrics.value_of("metadata_proto_migration_commit_count") == 1
+@test Metrics.value_of("metadata_proto_migration_commit_count") == 1
 ```
 
 

@@ -217,26 +217,26 @@ end
 
 @testitem "spawn_with_error_log metrics" begin
     using ProductionMonitoring.ThreadingUtils
-    using ProductionMonitoring.RAI_Metrics
+    using ProductionMonitoring.Metrics
     using ProductionMonitoring.ThreadingUtils: @spawn_with_error_log
-    RAI_Metrics.zero_all_metrics()
-    @test_broken RAI_Metrics.value_of("threading_spawn_in_flight") == 0
-    @test_broken RAI_Metrics.value_of("threading_spawn_calls_total") == 0
+    Metrics.zero_all_metrics()
+    @test_broken Metrics.value_of("threading_spawn_in_flight") == 0
+    @test_broken Metrics.value_of("threading_spawn_calls_total") == 0
 
     synchronizer = Channel()
     tasks = Channel(Inf)
 
-    @test_broken RAI_Metrics.value_of("threading_spawn_in_flight") == 0
+    @test_broken Metrics.value_of("threading_spawn_in_flight") == 0
     for i in 1:128
         # Block on the channel
         t = @spawn_with_error_log begin take!(synchronizer) end
         put!(tasks, t)
-        @test_broken RAI_Metrics.value_of("threading_spawn_in_flight") == i
-        @test_broken RAI_Metrics.value_of("threading_spawn_calls_total") == i
+        @test_broken Metrics.value_of("threading_spawn_in_flight") == i
+        @test_broken Metrics.value_of("threading_spawn_calls_total") == i
     end
     close(tasks)
-    @test_broken RAI_Metrics.value_of("threading_spawn_in_flight") == 128
-    @test_broken RAI_Metrics.value_of("threading_spawn_calls_total") == 128
+    @test_broken Metrics.value_of("threading_spawn_in_flight") == 128
+    @test_broken Metrics.value_of("threading_spawn_calls_total") == 128
 
     # Unblock the tasks
     for i in 1:128
@@ -246,6 +246,6 @@ end
     for t in tasks
         wait(t)
     end
-    @test_broken RAI_Metrics.value_of("threading_spawn_in_flight") == 0
-    @test_broken RAI_Metrics.value_of("threading_spawn_calls_total") == 128
+    @test_broken Metrics.value_of("threading_spawn_in_flight") == 0
+    @test_broken Metrics.value_of("threading_spawn_calls_total") == 128
 end

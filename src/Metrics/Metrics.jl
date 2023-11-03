@@ -1,4 +1,4 @@
-module RAI_Metrics
+module Metrics
 
 using Dates
 using Printf
@@ -61,7 +61,7 @@ macro time_ms(ex)
     end
 end
 
-include("metrics.jl")
+include("metrics-impls.jl")
 include("value-containers.jl")
 include("metric-group.jl")
 include("registry.jl")
