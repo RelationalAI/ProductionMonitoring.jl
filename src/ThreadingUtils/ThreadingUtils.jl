@@ -191,7 +191,7 @@ macro spawn_periodic_task(period, expr, name="Unnamed", ending_expr=nothing)
     end
 end
 
-macro spawn_sticky_periodic_task(name, period, expr, ending_expr=nothing)
+macro spawn_interactive_periodic_task(name, period, expr, ending_expr=nothing)
     return quote
         n = $(esc(name))
         p = $(esc(period))

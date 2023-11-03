@@ -1,6 +1,6 @@
 ## Tracing Configuration
 
-using ProductionMonitoring.ThreadingUtils: PeriodicTask, @spawn_sticky_periodic_task, stop_periodic_task!
+using ProductionMonitoring.ThreadingUtils: PeriodicTask, @spawn_interactive_periodic_task, stop_periodic_task!
 
 # AbstractThreshold is the super types of all the available span thresholds.
 # Each of the subtype is solely used by a should_span_be_filtered method.
@@ -86,7 +86,7 @@ end
 function start_datadog_exporter!()
     if isnothing(tracing_config.datadog_bg)
         tracing_config.datadog_bg =
-            @spawn_sticky_periodic_task "DatadogTraceUploader" Dates.Second(
+            @spawn_interactive_periodic_task "DatadogTraceUploader" Dates.Second(
                 DEFAULT_BATCH_DELAY,
             ) datadog_buffer_spans_and_send!() datadog_buffer_spans_and_send!()
         @info "Datadog tracing will send spans to $(get_datadog_trace_backend_url())"
@@ -96,7 +96,7 @@ end
 function start_zipkin_exporter!()
     if isnothing(tracing_config.zipkin_bg)
         tracing_config.zipkin_bg =
-            @spawn_sticky_periodic_task "ZipkinTraceUploader" Dates.Second(
+            @spawn_interactive_periodic_task "ZipkinTraceUploader" Dates.Second(
                 DEFAULT_BATCH_DELAY,
             ) zipkin_buffer_spans_and_send() zipkin_buffer_spans_and_send()
     end

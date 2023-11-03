@@ -39,7 +39,7 @@ function MicrometricManager()
     mm = MicrometricManager(ReentrantLock(), Micrometric[])
     # The theory was that this commented-out line would ensure that metrics are reported
     # every two seconds, but I could never get it to work properly.
-    # @spawn_sticky_periodic_task "ThreadingUtils.MicrometricManager" Dates.Second(2) mm_thread()
+    # @spawn_interactive_periodic_task "ThreadingUtils.MicrometricManager" Dates.Second(2) mm_thread()
     return mm
 end
 

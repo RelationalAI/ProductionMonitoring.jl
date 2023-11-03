@@ -15,7 +15,7 @@
 #    end
 #
 #    accumulator = Atomic{Int64}(0)
-#    t = ThreadingUtils.@spawn_sticky_periodic_task "Adder" Dates.Millisecond(9) atomic_add!(accumulator, 1)
+#    t = ThreadingUtils.@spawn_interactive_periodic_task "Adder" Dates.Millisecond(9) atomic_add!(accumulator, 1)
 #    sleep(0.1)
 #    @test istaskstarted(t)
 #    @test istaskstarted(t.task)
@@ -41,7 +41,7 @@
 #    @test accumulator[] == curr_value
 #end
 
-@testitem "spawn_sticky_periodic_task on correct threadpool" begin
+@testitem "spawn_interactive_periodic_task on correct threadpool" begin
     using ProductionMonitoring.ThreadingUtils
     using Dates
     @static if Threads.nthreads(:interactive) > 0
@@ -51,7 +51,7 @@
         task_executed = Dict{Int,Int}()
         Threads.@threads :static for i in 1:Threads.nthreads()
             @lock tlock begin
-                t = ThreadingUtils.@spawn_sticky_periodic_task "T-$i" Dates.Millisecond(100) begin
+                t = ThreadingUtils.@spawn_interactive_periodic_task "T-$i" Dates.Millisecond(100) begin
                     scheduled_at[i] = Threads.threadpool()
                     task_executed[i] = 1
                 end
@@ -85,7 +85,7 @@ end
     end
 
     acc = Atomic{Int64}(0)
-    t = ThreadingUtils.@spawn_sticky_periodic_task "Exceptional" Dates.Millisecond(10) increment_up_to_five(acc)
+    t = ThreadingUtils.@spawn_interactive_periodic_task "Exceptional" Dates.Millisecond(10) increment_up_to_five(acc)
     sleep(0.1)
     @test istaskstarted(t)
     @test istaskstarted(t.task)
@@ -113,7 +113,7 @@ end
 @testitem "spawn named sticky periodic task" begin
     using ProductionMonitoring.ThreadingUtils
     using Dates
-    t = ThreadingUtils.@spawn_sticky_periodic_task "Named" Dates.Millisecond(10) sleep(0.01)
+    t = ThreadingUtils.@spawn_interactive_periodic_task "Named" Dates.Millisecond(10) sleep(0.01)
     @test t.name == "Named"
     ThreadingUtils.stop_periodic_task!(t)
 end

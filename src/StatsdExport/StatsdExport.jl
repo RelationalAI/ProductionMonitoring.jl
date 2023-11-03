@@ -5,7 +5,7 @@ using Dates: now, Period, Millisecond, Second
 using ProductionMonitoring.Metrics
 using ProductionMonitoring.Metrics: NumericMetric
 using Sockets
-using ProductionMonitoring.ThreadingUtils: PeriodicTask, @spawn_sticky_periodic_task, stop_periodic_task!
+using ProductionMonitoring.ThreadingUtils: PeriodicTask, @spawn_interactive_periodic_task, stop_periodic_task!
 
 # Environment variable names for configuring dogstatsd backend.
 const ENV_DD_DOGSTATSD_HOST = "DD_DOGSTATSD_HOST"
@@ -105,7 +105,7 @@ background thread will be stored in `data.exporter_thread`.
 """
 function start_statsd_exporter!(data::StatsdExporter)
     if Dates.value(data.send_interval) > 0
-        data.periodic_task = @spawn_sticky_periodic_task(
+        data.periodic_task = @spawn_interactive_periodic_task(
             "StatsdExporter",
             data.send_interval,
             send_metric_updates(data),
