@@ -341,6 +341,8 @@ end
 
 
 @testitem "should_emit_log - no allocs" begin
+    Base.Experimental.@optlevel 2  # perf test
+
     using ProductionMonitoring.DebugLevels
     using Logging
     function should_log_1()
