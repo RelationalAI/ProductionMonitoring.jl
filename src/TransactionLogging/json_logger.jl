@@ -104,6 +104,8 @@ function Logging.handle_message(
             "attrs" => kwargs_attrs,
             "thread_id" => Base.Threads.threadid(),
         )
+        # TODO: Obviously these tags are all RAI-specific, and if others will want to use our logger setup,
+        # we will probably want to abstract this into something better.
         if has_request_id(logger)
             logcontent["request_id"] = get_request_id(logger)
         end
